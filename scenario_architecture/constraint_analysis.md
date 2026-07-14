@@ -1,43 +1,129 @@
-Task A1 – Constraint Analysis
-Constraint Analysis for the FreightBridge Cold-Chain Edge AI Deployment
-The LogiEdge system is designed to monitor refrigerated trucks that transport medicines in real time, utilizing Edge Artificial Intelligence. Rather than depending solely on the cloud, this AI operates directly on the truck, ensuring continuous monitoring even when internet connectivity is unreliable. To evaluate the effectiveness of this approach, four key aspects of Edge AI must be considered: its response speed, data usage, connectivity reliability, and the security of the information it handles.
-1. Latency Constraint
-FreightBridge's refrigerated trucks are used to transport temperature-sensitive medicines and vaccines, and any failure in the refrigeration system can quickly lead to a loss in product quality.
-According to the project's specifications, a refrigeration unit failure can cause the cargo temperature to rise by about 1°C per minute, and the system must identify and generate an alert within 90 seconds of the first sign of a fault in the sensor data.
-A cloud-based system requires sensor data to be sent from the truck to a remote cloud server for processing before the results are sent back to the truck or the operations centre.
-In rural areas of Maharashtra and Andhra Pradesh, cellular networks often face issues like high latency, network congestion, and intermittent connectivity.While a stable 4G network usually has a round-trip latency of between 100 and 300 milliseconds, in rural areas these delays can increase to several seconds or even lead to complete communication failure.Therefore, a purely cloud-based solution cannot ensure the required 90-second detection window, especially during network interruptions.
-In contrast, Edge AI performs the inference directly on the onboard computing device, reducing the inference latency to just a few milliseconds.
-This allows for the immediate detection of refrigeration system problems and ensures that timely alerts can be sent to both the driver and the operations centre whenever a connection is available.
-2. Bandwidth Constraint
-Each refrigerated truck continuously generates sensor data from three sources:
-Temperature sensor: 1 reading/second
-Vibration sensor: 500 readings/second (3-axis)
-Door sensor: Event-driven (open/close)
-Assuming each sensor value occupies 4 bytes, the daily data generation can be estimated as follows:
-Temperature data:
-86,400 readings/day × 4 bytes = 345,600 bytes ≈ 0.33 MB/day
-Vibration data:
-500 × 3 = 1,500 values/second
-1,500 × 86,400 = 129,600,000 values/day
-129,600,000 × 4 bytes = 518,400,000 bytes ≈ 494 MB/day
+# Constraint Analysis
+
+## Overview
+
+This document presents the constraint analysis for the LogiEdge Edge AI deployment at FreightBridge Logistics Pvt. Ltd. The analysis evaluates the suitability of Edge AI for refrigerated pharmaceutical truck monitoring based on four key Edge AI constraints: latency, bandwidth, connectivity, and privacy.
+
+---
+
+# Task A1 – Constraint Analysis
+
+## 1. Latency Constraint
+
+FreightBridge's refrigerated trucks transport temperature-sensitive medicines and vaccines, making rapid fault detection essential for maintaining cargo quality.
+
+According to the project specifications, a refrigeration unit failure can increase cargo temperature by approximately **1°C per minute**, and the system must detect the fault and generate an alert within **90 seconds** of the first abnormal sensor signature.
+
+A cloud-based architecture requires sensor data to be transmitted from the truck to a remote cloud server for processing before the inference results are returned to the truck or the operations centre.
+
+In rural regions of **Maharashtra** and **Andhra Pradesh**, cellular networks frequently experience high latency, congestion, and intermittent connectivity. Although a stable 4G network typically provides a round-trip latency between **100 ms and 300 ms**, delays in rural areas can increase to several seconds or communication may fail entirely.
+
+Consequently, a cloud-only solution cannot reliably guarantee the required **90-second detection window**, particularly during network interruptions.
+
+In contrast, the proposed Edge AI architecture performs inference directly on the truck's onboard computing device. Local inference reduces processing latency to only a few milliseconds, enabling immediate detection of refrigeration failures and allowing alerts to be generated locally. The operations centre receives these alerts whenever network connectivity becomes available.
+
+---
+
+## 2. Bandwidth Constraint
+
+Each refrigerated truck continuously generates sensor data from three independent streams:
+
+| Sensor | Sampling Rate |
+|---------|---------------:|
+| Temperature | 1 reading/second |
+| Vibration (3-axis) | 500 readings/second |
+| Door Event | Event-driven |
+
+Assuming each sensor value occupies **4 bytes**, the daily data generation is estimated as follows.
+
+### Temperature Data
+
+```
+86,400 readings/day × 4 bytes
+= 345,600 bytes
+≈ 0.33 MB/day
+```
+
+### Vibration Data
+
+```
+500 samples/sec × 3 axes
+= 1,500 values/sec
+
+1,500 × 86,400
+= 129,600,000 values/day
+
+129,600,000 × 4 bytes
+= 518,400,000 bytes
+≈ 494 MB/day
+```
+
 Door event data is negligible compared to vibration data.
-Therefore, the total raw data generated per truck is approximately:
-494 MB + 0.33 MB ≈ 494.33 MB/day
-At a transmission cost of ₹0.10 per MB, the communication cost becomes:
-494.33 × ₹0.10 ≈ ₹49.43 per truck per day
-For 85 refrigerated trucks, the daily transmission cost would be approximately:
-85 × ₹49.43 ≈ ₹4,202 per day
-An Edge AI solution avoids continuous transmission of raw sensor streams. Instead, only anomaly alerts, periodic summaries, and system health reports are transmitted, typically amounting to only a few kilobytes per day. This significantly reduces bandwidth consumption and communication costs while improving scalability.
-3. Connectivity Constraint
-FreightBridge has identified seven points along the Nashik–Aurangabad route where cellular connectivity is unavailable for between 35 to 90 minutes.
-During these periods of network outage, a cloud-only system would not be able to receive sensor data, carry out analysis, or produce timely alerts. Any refrigeration failures that occur during these times would go unnoticed until the network connection is restored, thereby increasing the risk of damaged cargo and failure to meet regulatory standards.
-The proposed Edge AI architecture addresses this issue by conducting all analysis locally on the truck.
-Sensor data is continuously processed in real time, even when there is no network connection. Drivers receive immediate alerts, and operational events are safely stored in the device's local memory. When connectivity is restored, the stored data and alerts are automatically synced with the central operations platform. This store-and-forward approach ensures continuous monitoring throughout the entire transportation process.
-4. Privacy Constraint
-FreightBridge's pharmaceutical clients need to be assured that temperature records and cargo condition data are kept secure and not accessible to unauthorized individuals.
-In a cloud-only setup, the constant sending of raw operational data through public cellular networks raises the risk of interception, unauthorized access, and possible data breaches.
-By conducting inference locally, the Edge AI system reduces the amount of sensitive information being sent outside the vehicle.
-Only necessary outputs, such as classification results, alerts, and encrypted summary reports, are shared with the cloud. This greatly lowers the potential for security threats while maintaining the confidentiality of operational data. As a result, on-device inference supports compliance with security agreements and boosts customer confidence in the reliability of the pharmaceutical cold chain.
-Conclusion
-Given the strict latency demands, large volume of sensor data, inconsistent connectivity in rural areas, and strong privacy regulations, a cloud-only setup is not suitable for FreightBridge's cold-chain monitoring system.
-An Edge AI-based approach enables real-time decision-making, lowers communication expenses, ensures continuous operations during network disruptions, and improves data security. As a result, Edge AI is the most suitable architecture for the LogiEdge pilot and offers a scalable foundation for future implementation across the entire company fleet.
+
+Therefore, the total raw sensor data generated by one truck is approximately:
+
+```
+494 MB + 0.33 MB
+≈ 494.33 MB/day
+```
+
+At a transmission cost of **₹0.10 per MB**, the communication cost becomes:
+
+```
+494.33 × ₹0.10
+≈ ₹49.43 per truck per day
+```
+
+For the **85 refrigerated trucks** included in the pilot deployment:
+
+```
+85 × ₹49.43
+≈ ₹4,202 per day
+```
+
+An Edge AI architecture avoids continuously transmitting raw sensor streams. Instead, only anomaly alerts, periodic summaries, and system health reports are transmitted, reducing daily communication to only a few kilobytes per truck. This significantly lowers bandwidth consumption, communication costs, and improves fleet scalability.
+
+---
+
+## 3. Connectivity Constraint
+
+FreightBridge has identified **seven locations** along the **Nashik–Aurangabad** route where cellular connectivity is unavailable for periods ranging from **35 to 90 minutes**.
+
+During these communication gaps, a cloud-only architecture would be unable to receive sensor data, perform inference, or generate timely alerts. Any refrigeration failures occurring during these outages would remain undetected until network connectivity is restored, increasing the likelihood of cargo spoilage and regulatory non-compliance.
+
+The proposed Edge AI architecture eliminates this dependency by processing all sensor data locally on the truck.
+
+Sensor streams continue to be analysed in real time regardless of network availability. Drivers receive immediate alerts through the onboard system, while operational events are securely stored in local memory. Once connectivity is restored, the stored alerts and historical data are automatically synchronised with the central operations platform using a **store-and-forward** mechanism.
+
+This approach guarantees uninterrupted monitoring throughout the transportation process.
+
+---
+
+## 4. Privacy Constraint
+
+FreightBridge's pharmaceutical clients require assurance that temperature records and cargo condition data remain protected against unauthorised access.
+
+In a cloud-only deployment, continuous transmission of raw operational data across public cellular networks increases the risk of interception, unauthorised access, and potential data breaches.
+
+By performing inference directly on the edge device, the proposed architecture significantly reduces the amount of sensitive operational data leaving the truck.
+
+Only essential outputs—including classification results, anomaly alerts, and encrypted summary reports—are transmitted to the cloud.
+
+This approach minimises exposure of confidential operational information while supporting contractual security requirements, improving customer trust, and maintaining the integrity of the pharmaceutical cold chain.
+
+---
+
+# Conclusion
+
+FreightBridge's operational requirements include strict latency constraints, high sensor data volumes, unreliable rural network connectivity, and stringent pharmaceutical data security requirements.
+
+A cloud-only architecture cannot reliably satisfy these operational demands.
+
+The proposed Edge AI architecture enables:
+
+- Real-time fault detection within the required 90-second window.
+- Significant reduction in communication bandwidth and transmission costs.
+- Continuous operation during extended network outages.
+- Improved privacy through local processing and limited data transmission.
+
+Therefore, an Edge AI-based deployment is the most appropriate architecture for the LogiEdge pilot project and provides a scalable foundation for future deployment across FreightBridge's complete fleet.
